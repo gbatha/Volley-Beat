@@ -48,11 +48,19 @@ public class BPM : MonoBehaviour {
 
 		//if the next beat is like rn, and we want the next sounding one, add the beat length to this time to round up
 		if (roundUp && time < roundUpThreshold) {
-			time += getBeatFractionTime(fractIn);
+			time += getBeatFractionTime (fractIn);
+		} else if (roundUp && time < getBeatFractionTime (fractIn) * 0.75f) {
+			//if the nearest fraction is actually significantly closer than the fraction length and we're rounding,
+			//round to the nearest fractionLength. (this is to fix 2/1 rounding to the nearest 2/1 which was actually only half a beat away)
+
+			//get how much of the beat length we didn't use
+			float remain = getBeatFractionTime (fractIn) - time;
+			float roundFract = getBeatFractionTime (1f/4f);
+			//round remainder to the nearest quarter beat
+			float add = Mathf.Round(remain / roundFract) * roundFract;
+
+			time += add;
 		}
-		//ERROR this only works for when it's a few ms off
-		//when we call 2/1 it rounds to the nearest 2/1, even if that's only 1/2 beat away
-		//do another check to see if we're less than 3/4 of the time away, and if we are then use modulo to find the nearest one to time
 		return time;
 	}
 
