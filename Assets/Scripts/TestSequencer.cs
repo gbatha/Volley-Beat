@@ -34,14 +34,20 @@ public class TestSequencer : MonoBehaviour {
 //			StartCoroutine(delaySpawnPrefab(BPM.controller.timeUntilNextBeatFraction(1f/4f) + BPM.controller.getBeatFractionTime(1f/4f)*2f));
 		}
 
-		if (Input.GetKeyDown (KeyCode.UpArrow))
-			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (2);
+
 		if (Input.GetKeyDown (KeyCode.Z))
-			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (1);
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (1,0);
 		if (Input.GetKeyDown (KeyCode.A))
-			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (3);
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (2,0);
+		if (Input.GetKeyDown (KeyCode.S))
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (3,0);
+
+		if (Input.GetKeyDown (KeyCode.UpArrow))
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (4,1);
 		if (Input.GetKeyDown (KeyCode.RightArrow))
-			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (4);
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (5,1);
+		if (Input.GetKeyDown (KeyCode.LeftArrow))
+			GameObject.Find ("Ball").GetComponent<BallBehavior> ().Hit (6,1);
 	}
 
 	IEnumerator delaySpawnPrefab(float delay){
@@ -55,7 +61,7 @@ public class TestSequencer : MonoBehaviour {
 	IEnumerator delayInvertRender(float delay){
 		yield return new WaitForSeconds(delay);
 		if (playing) {
-			Debug.Log("I: "+Time.time);
+//			Debug.Log("I: "+Time.time);
 			renderer.enabled = !renderer.enabled;
 			StartCoroutine(delayInvertRender(BPM.controller.timeUntilNextBeatFraction(1f/1f)));
 		}
