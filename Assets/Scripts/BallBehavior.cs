@@ -12,13 +12,17 @@ public class BallBehavior : MonoBehaviour {
 	int playerTurn = 1; //top player is 0, bottom is 1. 1 always serves so we default to that
 	float nextHitTime = 0f; //the exact moment the ball will land on the target. calc the window from this
 	bool hitWindow = false;
-	bool delayNextHit = true; //this is for if we hit late, set false to trigger the hit immediately
 
 	//positional variables
 	float[] goalY = { 0.9f,0.1f }; //in screen percentages
 
 	[SerializeField]
 	MeshRenderer[] goalRenderers = new MeshRenderer[2];
+
+	[SerializeField]
+	AudioClip[] scaleNotes = new AudioClip[4];
+	int[] scaleSequence = {0,2,3,1};
+	int scaleSeqIndex = 0;
 
 	// Use this for initialization
 	void Start () {
@@ -38,17 +42,17 @@ public class BallBehavior : MonoBehaviour {
 		//but we have a hit time
 		//and the current time is within the window frame
 		if (!hitWindow && nextHitTime > 0f &&
-			Time.time >= nextHitTime - BPM.controller.getBeatFractionTime (1f / 8f) &&
-			Time.time <= nextHitTime + BPM.controller.getBeatFractionTime (1f / 8f)) {
+			Time.time >= nextHitTime - BPM.controller.getBeatFractionTime (1f / 4f) &&
+			Time.time <= nextHitTime + BPM.controller.getBeatFractionTime (1f / 4f)) {
 			hitWindow = true;
 			goalRenderers[playerTurn].material.color = Color.green;
 		} else if(hitWindow &&
-		          (Time.time < nextHitTime - BPM.controller.getBeatFractionTime (1f / 8f) ||
-		          Time.time > nextHitTime + BPM.controller.getBeatFractionTime (1f / 8f))) {
+		          (Time.time < nextHitTime - BPM.controller.getBeatFractionTime (1f / 4f) ||
+		          Time.time > nextHitTime + BPM.controller.getBeatFractionTime (1f / 4f))) {
 			//otherwise hit window is true and shouldn't be anymore
 			hitWindow = false;
 			goalRenderers[playerTurn].material.color = Color.white;
-			if(Time.time > nextHitTime + BPM.controller.getBeatFractionTime (1f / 8f)){
+			if(Time.time > nextHitTime + BPM.controller.getBeatFractionTime (1f / 4f)){
 				goalRenderers[playerTurn].material.color = Color.red;
 			}
 		}
@@ -69,14 +73,6 @@ public class BallBehavior : MonoBehaviour {
 		//if we didn't have any targets before this, queue up the tweens now
 		if (targets.Count == 0) {
 			startAfterQueue = true;
-		}
-
-		//check if we should quantize this hit or trigger it immediately upon adding
-		if (nextHitTime > 0f && Time.time > nextHitTime) {
-//			delayNextHit = false;
-			Debug.Log("TRIGGER HIT NOW");
-		} else {
-			delayNextHit = true;
 		}
 
 		float timeOfAnimation = 0f; //the cumulative time the ball will take to reach its target once it's hit
@@ -134,7 +130,13 @@ public class BallBehavior : MonoBehaviour {
 
 		//this is a serve, so start at the next beat!
 		if (startAfterQueue) {
+			Debug.Log("SERVE");
 			float delay = BPM.controller.timeUntilNextBeatFraction (1f / 1f) - 0.05f;
+			Debug.Log(delay+" : "+BPM.controller.getBeatFractionTime(1f/1f));
+			//uhhhh i guess if the delay is too long, like at .75, then just do it now? this should prevent the delay i hope
+			if(delay / BPM.controller.getBeatFractionTime(1f/1f) > 0.75f){
+				delay = 0f;
+			}
 			StartCoroutine (DoTweenTo (transform.position,
 			                           targets [0].position,
 			                           BPM.controller.getBeatFractionTime (targets [0].fraction),
@@ -168,7 +170,8 @@ public class BallBehavior : MonoBehaviour {
 //		if(time < 0.3f) Debug.Log ("TIME LOW:" + time);
 		if (delay > 0f) {
 			yield return new WaitForSeconds(delay);
-			sound.Play();
+			playNextNote();
+//			sound.Play();
 		}
 
 		float t = 0.0f;
@@ -180,23 +183,25 @@ public class BallBehavior : MonoBehaviour {
 			yield return null;
 		}
 //		Debug.Log("H: "+Time.time);
-		sound.Play();
+		playNextNote ();
+//		sound.Play();
 
 		//assuming we're tweening from the target list, remove this from the list
 		targets.RemoveAt (0);
 		//tween the next right now one if we have one
 		if (targets.Count > 0) {
 			float delayTime = BPM.controller.timeUntilNextBeatFraction (targets [0].fraction, true);
-			//if we want to trigger this hit immediately, set delay to 0 and reset the delayNextHit flag to true
-			if(!delayNextHit){
-				delayTime = 0f;
-				delayNextHit = true;
-			}
 			StartCoroutine (DoTweenTo (transform.position,
 			                           targets[0].position,
 			                           delayTime,
 			                           0f));
 		}
+	}
+
+	void playNextNote(){
+		sound.clip = scaleNotes[scaleSequence[scaleSeqIndex]];
+		sound.Play ();
+		scaleSeqIndex = (scaleSeqIndex + 1 >= scaleSequence.Length) ? 0 : scaleSeqIndex + 1;
 	}
 }
 

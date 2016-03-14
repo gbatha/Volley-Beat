@@ -10,6 +10,7 @@ public class TestSequencer : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		renderer = GetComponent<MeshRenderer> ();
+
 	}
 	
 	// Update is called once per frame
